@@ -1,16 +1,6 @@
 from PIL import Image
 import math
 
-def fitToFrame(image, frameHeight, frameWidth):
-    """Shrink image to fit in frame of given height and width, preserving the orignal aspect ratio"""
-    w, h = image.size
-    scale = min(frameWidth / w, frameHeight / h)
-    if scale < 1:
-        return image.resize((int(scale * w), int(scale * h)))
-    else:
-        return image
-
-
 def computeBlock(pixels, startY, endY, startX, endX, thresh):
 
     def countPassedPixels(startY, endY, startX, endX, thresh):
@@ -39,6 +29,7 @@ def computeBlock(pixels, startY, endY, startX, endX, thresh):
 
     return block
 
+
 def blockToBraille(block):
     """braille unicode characters are 0x2800 - 0x28FF
        @param block - 4x2 binary matrix"""
@@ -48,17 +39,13 @@ def blockToBraille(block):
     return chr(0x2800 + offset)
 
 
-if __name__ == '__main__':
-    thresh = 135
-    outH, outW = 20, 40
-    image = Image.open('test/pikachu.png')
-
-    #if image.size[0] > 200 and image.size[1] > 200:
-    #    image = image.resize((200, 200))
-    #image = fitToFrame(image, 200, 200)
+def dotify(image, thresh, outH, outW, reverse=False):
     image = image.convert('L')
-    image = image.point(lambda p: 255 if p >= thresh else 0)
     image.save('test.jpg')
+    if not reverse:
+        image = image.point(lambda p: 255 if p >= thresh else 0)
+    else:
+        image = image.point(lambda p: 0 if p >= thresh else 255)
     w, h = image.size
     pixels = image.load()
     blockH = int(math.ceil(h / outH))
@@ -73,26 +60,14 @@ if __name__ == '__main__':
             char = blockToBraille(block)
             result[y][x] = char
 
+    return result
+
+
+if __name__ == '__main__':
+    thresh = 85
+    outH, outW = 15, 30
+    reverse=False
+    image = Image.open('test/pikachu.png')
+    result = dotify(image, thresh, outH, outW, reverse)
     for x in range(len(result)):
         print(str.join('', result[x]))
-
-    #strideX = 5
-    #strideY = 10
-    #result = []
-    #for y in range(0, h, strideY):
-    #    row = []
-    #    for x in range(0, w, strideX):
-    #        count = 0
-    #        for yy in range(y, min(h, y + strideY)):
-    #            for xx in range(x, min(w, x + strideX)):
-    #                count += 0 if pixels[xx, yy] >= thresh else 1
-
-    #        if count >= strideY * strideX / 2:
-    #            row.append('\u28FF')
-    #        else:
-    #            row.append('\u2800')
-    #    result.append(row)
-
-    #for row in result:
-    #    print(str.join('', row))
-
