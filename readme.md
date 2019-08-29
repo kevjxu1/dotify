@@ -1,8 +1,12 @@
-Dependencies:
-Django version 2.2.3
-Python 3.7.4
-Pillow
+<h3>Dependencies:</h3>
+<ul>
+  <li>Django version 2.2.3</li>
+  <li>Python 3.7.4</li>
+  <li>Pillow</li>
+</ul>
 
-Run:
-in website/, $ python3 manage.py runserver
-Go to http://localhost:8000/dotify on a browser
+<h3>Run:</h3>
+<ul>
+  <li>In website/, $ python3 manage.py runserver</li>
+  <li>Go to http://localhost:8000/dotify on a browser</li>
+</ul>
