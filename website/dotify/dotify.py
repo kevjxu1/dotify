@@ -5,10 +5,10 @@ import sys
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
-def computeBlock(pixels, startY, endY, startX, endX, thresh):
+def _computeBlock(pixels, startY, endY, startX, endX, thresh):
     """@param endY, endX - noninclusive"""
 
-    def countPassedPixels(startY, endY, startX, endX, thresh):
+    def _countPassedPixels(startY, endY, startX, endX, thresh):
         count = 0
         for y in range(startY, endY):
             for x in range(startX, endX):
@@ -25,7 +25,7 @@ def computeBlock(pixels, startY, endY, startX, endX, thresh):
         for x in range(2):
             y0, x0 = min(endY, startY + strideY * y), min(endX, startX + strideX * x)
             y1, x1 = min(endY, y0 + strideY), min(endX, x0 + strideX)
-            count = countPassedPixels(y0, y1, x0, x1, thresh)
+            count = _countPassedPixels(y0, y1, x0, x1, thresh)
             countThresh = (x1 - x0) * (y1 - y0) / 16  # (height / 4) * (width / 2) / 2
             if count > 0 and count >= countThresh:
                 block[y][x] = 1
@@ -35,7 +35,7 @@ def computeBlock(pixels, startY, endY, startX, endX, thresh):
     return block
 
 
-def blockToBraille(block):
+def _blockToBraille(block):
     """braille unicode characters are 0x2800 - 0x28FF
        @param block - 4x2 binary matrix"""
     h1 = block[1][1] | (block[2][1] << 1) | (block[3][0] << 2) | (block[3][1] << 3)
@@ -44,14 +44,14 @@ def blockToBraille(block):
     return chr(0x2800 + offset)
 
 
-def getEmptyBlock(reverse):
+def _getEmptyBlock(reverse):
     val = 0 if not reverse else 1
     return [ [ val for j in range(2) ] for i in range(4) ]
 
 
-def dotify(image, thresh, outH, outW, reverse=False):
+def dotify(imageIO, thresh, outH, outW, reverse=False):
+    image = Image.open(imageIO)
     image = image.convert('L')
-    image.save('test.jpg')
     if not reverse:
         image = image.point(lambda p: 255 if p >= thresh else 0)
     else:
@@ -67,20 +67,26 @@ def dotify(image, thresh, outH, outW, reverse=False):
             y0, x0 = y * blockH, x * blockW
             y1, x1 = min(h, y0 + blockH), min(w, x0 + blockW)
             if y0 < y1 and x0 < x1:
-                block = computeBlock(pixels, y0, y1, x0, x1, thresh)
+                block = _computeBlock(pixels, y0, y1, x0, x1, thresh)
             else:
-                block = getEmptyBlock(reverse)
-            char = blockToBraille(block)
+                block = _getEmptyBlock(reverse)
+            char = _blockToBraille(block)
             result[y][x] = char
 
     return result
 
+def joinDots(mat):
+    lines = []
+    for i in range(len(mat)):
+        lines.append(str.join('', mat[i]))
+
+    return str.join('\n', lines)
+
 
 if __name__ == '__main__':
     thresh = 135
-    outH, outW = 50, 100
+    outH, outW = 40, 80
     reverse=False
-    image = Image.open('test/pikachu.png')
-    result = dotify(image, thresh, outH, outW, reverse)
-    for x in range(len(result)):
-        print(str.join('', result[x]))
+    imageIO = '/Users/kevinxu/Dotify/test/pikachu.png'
+    result = dotify(imageIO, thresh, outH, outW, reverse)
+    print(joinDots(result))
