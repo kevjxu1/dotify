@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Dotify</title>
+    <style>
+    textarea {
+        white-space: nowrap;
+        overflow: scroll;
+        overflow-y: scroll;
+        overflow-x: scroll;
+        resize: none;
+    }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script>
+
+    function updateDisplayRows() {
+        let chars = parseInt($('#id_outH').val());
+        let extra = Math.max(chars * 0.2, 5);
+        $('#display').attr('rows', chars + extra);
+    }
+
+    function updateDisplayCols() {
+        let chars = parseInt($('#id_outW').val());
+        let extra = Math.max(chars * 0.2, 5);
+        $('#display').attr('cols', chars + extra);
+    }
+
+    $( document ).ready(function() {
+        updateDisplayRows();
+        updateDisplayCols();
+        $('#generate_form').submit(function() {
+            var data = new FormData(this);
+            $.ajax({
+                url: '{% url "generate" %}',
+                type: 'POST',
+                data: data,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                enctype: 'multipart/form-data',
+                success: function (result) {
+                    let dots = result['dots'];
+                    $('#display').val(dots);
+                },
+                error: function(xhr, status, error) {
+                    var errorMessage = xhr.status + ': ' + xhr.statusText
+                    alert('Error - ' + errorMessage);
+                }
+              });
+        });
+        $('#id_outH').change(function() {
+            let chars = parseInt($(this).val());
+            let extra = Math.max(chars * 0.2, 5);
+            $('#display').attr('rows', chars + extra);
+        });
+        $('#id_outW').change(function() {
+            let chars = parseInt($(this).val());
+            let extra = Math.max(chars * 0.2, 5);
+            $('#display').attr('cols', chars + extra);
+        });
+    });
+
+    </script>
+</head>
+<body>
+    <h3>Dotify</h3>
+    <form id="generate_form" method="POST" action="javascript:void(0);" enctype="multipart/form-data">
+        <!--<input type="file" id="image" accept="image/*">File</input>-->
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button name='generate' id='generate' type="submit">Generate</button>
+    </form>
+    <textarea id='display'></textarea>
+</body>
+</html>
